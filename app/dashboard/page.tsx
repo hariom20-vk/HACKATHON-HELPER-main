@@ -29,7 +29,9 @@ export default function Dashboard() {
   });
   const [showProfile, setShowProfile] = useState(false);
   const [showProjectsPanel, setShowProjectsPanel] = useState(false);
-  // Derived metric helpers for sidebar stats visualizations
+  const [showTeamDetailsModal, setShowTeamDetailsModal] = useState(false);
+  const [selectedTeamForDetails, setSelectedTeamForDetails] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const projectsPercent = Math.min(100, Math.round((userStats.projectsCompleted / 20) * 100));
   const [projectsAnimatedPercent, setProjectsAnimatedPercent] = useState(0);
   const [scoreAnimated, setScoreAnimated] = useState(0);
@@ -91,6 +93,16 @@ export default function Dashboard() {
     };
     checkUser();
   }, [router]);
+
+  // read persisted role from localStorage (set during login)
+  useEffect(() => {
+    try {
+      const role = typeof window !== "undefined" ? localStorage.getItem("hh_user_role") : null;
+      if (role) setUserRole(role);
+    } catch (e) {
+      // ignore
+    }
+  }, []);
 
   const sampleTeams = [
     {
@@ -251,6 +263,31 @@ export default function Dashboard() {
     setChatInput("");
   };
 
+  // Team Head dashboard data
+  const teamHeadData = {
+    teamName: "Web Warriors",
+    teamDesc: "Building innovative web solutions and AI-powered platforms",
+    teamMembers: 8,
+    completedProjects: 3,
+    totalEarnings: "₹150,000",
+    winRate: "75%"
+  };
+
+  const teamMembersData = [
+    { name: "Alice Johnson", role: "Frontend Lead", level: "Expert", avatar: "https://randomuser.me/api/portraits/women/1.jpg", score: 9200, contribution: "92%", hackathons: 12, skills: ["React", "TypeScript", "UI/UX"] },
+    { name: "Bob Smith", role: "Backend Lead", level: "Advanced", avatar: "https://randomuser.me/api/portraits/men/2.jpg", score: 8800, contribution: "88%", hackathons: 10, skills: ["Node.js", "Python", "AWS"] },
+    { name: "Charlie Brown", role: "DevOps Engineer", level: "Intermediate", avatar: "https://randomuser.me/api/portraits/men/3.jpg", score: 7500, contribution: "75%", hackathons: 6, skills: ["Docker", "Kubernetes", "CI/CD"] },
+    { name: "Dana Martinez", role: "ML Engineer", level: "Advanced", avatar: "https://randomuser.me/api/portraits/women/4.jpg", score: 8500, contribution: "85%", hackathons: 9, skills: ["Python", "TensorFlow", "Data Science"] },
+    { name: "Eve Wilson", role: "Fullstack Dev", level: "Advanced", avatar: "https://randomuser.me/api/portraits/women/5.jpg", score: 8300, contribution: "83%", hackathons: 8, skills: ["React", "Node.js", "MongoDB"] }
+  ];
+
+  const hackathonEvents = [
+    { name: "TechHack 2025", date: "Nov 20, 2025", status: "Upcoming", prize: "₹50,000", category: "Web & Mobile", registered: true },
+    { name: "AI Innovation Summit", date: "Dec 5, 2025", status: "Upcoming", prize: "₹75,000", category: "AI/ML", registered: false },
+    { name: "CodeFest 2024", date: "Sep 15, 2024", status: "Completed", prize: "₹35,000", category: "General", placement: "🥇 1st Place" },
+    { name: "WebDev Challenge 2024", date: "Aug 10, 2024", status: "Completed", prize: "₹25,000", category: "Web", placement: "🥈 2nd Place" }
+  ];
+
   // UI Styles
   const glassStyle = {
     background: "rgba(10,12,18,0.65)",
@@ -259,6 +296,184 @@ export default function Dashboard() {
     borderRadius: "14px",
     backdropFilter: "blur(6px)",
   };
+
+  // Team Head view - render and return early if team head role
+  if (userRole === "team-head") {
+    return (
+      <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #071427 0%, #0b2440 100%)", color: "#eaf6f8", display: "flex", flexDirection: "column", fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial" }}>
+        {/* Navigation */}
+        <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 36px", ...glassStyle, position: "sticky", top: 0, zIndex: 100 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <svg width="34" height="28" viewBox="0 0 34 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#00bcd4" />
+                  <stop offset="100%" stopColor="#00e676" />
+                </linearGradient>
+              </defs>
+              <rect x="0" y="0" width="34" height="28" rx="6" fill="url(#g1)" opacity="0.12" />
+              <path d="M9 20 L17 4 L25 20 H19 L17 14 L15 20 H9 Z" fill="#00e676" opacity="0.95" />
+            </svg>
+            <span style={{ fontFamily: "'Orbitron', Inter", fontWeight: 900, fontSize: "1.05rem", color: "#e6f9fb", letterSpacing: "1px", textTransform: "uppercase" }}>Hackathon Helper</span>
+          </div>
+          <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+            <span style={{ padding: "6px 14px", background: "rgba(0,180,219,0.12)", color: "#00bcd4", borderRadius: "8px", fontSize: "0.85rem", fontWeight: 800, border: "1px solid rgba(0,180,219,0.2)" }}>👑 Team Head</span>
+            <button onClick={async () => { try { await fetch("/api/auth/logout", { method: "POST" }); } catch (err) { console.error(err); } router.push("/"); }} style={{ padding: "8px 20px", border: "1px solid rgba(155,231,239,0.12)", color: "#e6f9fb", borderRadius: "8px", background: "transparent", fontSize: "0.95rem", cursor: "pointer", fontWeight: 700 }}>
+              Logout
+            </button>
+          </div>
+        </nav>
+
+        {/* Main Content */}
+        <div style={{ flex: 1, padding: "32px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "28px" }}>
+          {/* Page Title */}
+          <div>
+            <h1 style={{ fontSize: "2.4rem", fontWeight: 900, color: "#00bcd4", margin: "0 0 8px 0" }}>👑 Team Head Dashboard</h1>
+            <p style={{ color: "#cdeff3", fontSize: "1rem", margin: 0 }}>Manage your team, track progress, and participate in hackathons</p>
+          </div>
+
+          {/* Team Overview Card */}
+          <div style={{ ...glassStyle, padding: "28px", borderRadius: "16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "20px" }}>
+              <div>
+                <h2 style={{ fontSize: "1.8rem", fontWeight: 900, color: "#00e676", margin: 0 }}>{teamHeadData.teamName}</h2>
+                <p style={{ color: "#cdeff3", margin: "8px 0 0 0", fontSize: "0.95rem" }}>{teamHeadData.teamDesc}</p>
+              </div>
+              <button style={{ padding: "10px 20px", background: "linear-gradient(90deg,#00bcd4,#00e676)", color: "#042024", borderRadius: "8px", fontWeight: 800, cursor: "pointer", border: "none", fontSize: "0.9rem" }}>⚙️ Settings</button>
+            </div>
+
+            {/* Stats Grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "16px" }}>
+              <div style={{ background: "rgba(0,230,118,0.08)", padding: "16px", borderRadius: "12px", borderLeft: "4px solid #00e676" }}>
+                <div style={{ color: "#9be7ef", fontSize: "0.85rem", fontWeight: 700, marginBottom: "8px" }}>👥 Team Members</div>
+                <div style={{ fontSize: "2rem", fontWeight: 900, color: "#00e676" }}>{teamHeadData.teamMembers}</div>
+                <div style={{ color: "#cdeff3", fontSize: "0.8rem", marginTop: "4px" }}>Active contributors</div>
+              </div>
+
+              <div style={{ background: "rgba(0,180,219,0.08)", padding: "16px", borderRadius: "12px", borderLeft: "4px solid #00bcd4" }}>
+                <div style={{ color: "#9be7ef", fontSize: "0.85rem", fontWeight: 700, marginBottom: "8px" }}>📦 Projects Completed</div>
+                <div style={{ fontSize: "2rem", fontWeight: 900, color: "#00bcd4" }}>{teamHeadData.completedProjects}</div>
+                <div style={{ color: "#cdeff3", fontSize: "0.8rem", marginTop: "4px" }}>Successfully delivered</div>
+              </div>
+
+              <div style={{ background: "rgba(255,214,0,0.08)", padding: "16px", borderRadius: "12px", borderLeft: "4px solid #ffd600" }}>
+                <div style={{ color: "#9be7ef", fontSize: "0.85rem", fontWeight: 700, marginBottom: "8px" }}>💰 Total Earnings</div>
+                <div style={{ fontSize: "1.8rem", fontWeight: 900, color: "#ffd600" }}>{teamHeadData.totalEarnings}</div>
+                <div style={{ color: "#cdeff3", fontSize: "0.8rem", marginTop: "4px" }}>Prize pool earned</div>
+              </div>
+
+              <div style={{ background: "rgba(255,107,107,0.08)", padding: "16px", borderRadius: "12px", borderLeft: "4px solid #ff6b6b" }}>
+                <div style={{ color: "#9be7ef", fontSize: "0.85rem", fontWeight: 700, marginBottom: "8px" }}>🏆 Win Rate</div>
+                <div style={{ fontSize: "2rem", fontWeight: 900, color: "#ff6b6b" }}>{teamHeadData.winRate}</div>
+                <div style={{ color: "#cdeff3", fontSize: "0.8rem", marginTop: "4px" }}>Competitions won</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Team Members Section */}
+          <div style={{ ...glassStyle, padding: "28px", borderRadius: "16px" }}>
+            <h2 style={{ fontSize: "1.5rem", fontWeight: 900, color: "#00bcd4", marginBottom: "20px", marginTop: 0 }}>👥 Team Members & Performance</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px" }}>
+              {teamMembersData.map((member, idx) => (
+                <div key={idx} style={{ background: "rgba(255,255,255,0.03)", padding: "16px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)", transition: "all 0.3s" }}>
+                  {/* Header with Avatar & Name */}
+                  <div style={{ display: "flex", gap: "12px", marginBottom: "12px" }}>
+                    <img src={member.avatar} alt={member.name} style={{ width: "50px", height: "50px", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.08)" }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 900, color: "#e8fbff", fontSize: "0.95rem" }}>{member.name}</div>
+                      <div style={{ color: "#9be7ef", fontSize: "0.8rem", marginTop: "2px" }}>{member.role}</div>
+                    </div>
+                  </div>
+
+                  {/* Level Badge */}
+                  <div style={{ marginBottom: "10px" }}>
+                    <span style={{ padding: "4px 10px", background: member.level === "Expert" ? "rgba(0,230,118,0.15)" : member.level === "Advanced" ? "rgba(0,180,219,0.15)" : "rgba(255,214,0,0.15)", color: member.level === "Expert" ? "#00e676" : member.level === "Advanced" ? "#00bcd4" : "#ffd600", borderRadius: "6px", fontSize: "0.75rem", fontWeight: 800, display: "inline-block" }}>
+                      📊 {member.level}
+                    </span>
+                  </div>
+
+                  {/* Performance Metrics */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", fontSize: "0.85rem", marginBottom: "10px" }}>
+                    <div style={{ background: "rgba(255,214,0,0.08)", padding: "8px", borderRadius: "8px" }}>
+                      <div style={{ color: "#cdeff3", fontSize: "0.75rem", marginBottom: "2px" }}>Score</div>
+                      <div style={{ color: "#ffd600", fontWeight: 900 }}>{member.score}</div>
+                    </div>
+                    <div style={{ background: "rgba(0,230,118,0.08)", padding: "8px", borderRadius: "8px" }}>
+                      <div style={{ color: "#cdeff3", fontSize: "0.75rem", marginBottom: "2px" }}>Contribution</div>
+                      <div style={{ color: "#00e676", fontWeight: 900 }}>{member.contribution}</div>
+                    </div>
+                  </div>
+
+                  {/* Hackathons Attended */}
+                  <div style={{ background: "rgba(0,180,219,0.08)", padding: "8px", borderRadius: "8px", marginBottom: "10px", color: "#00bcd4", fontSize: "0.8rem", fontWeight: 800 }}>
+                    🎖️ {member.hackathons} hackathons attended
+                  </div>
+
+                  {/* Skills */}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                    {member.skills.map((skill, sidx) => (
+                      <span key={sidx} style={{ padding: "3px 8px", background: "rgba(255,255,255,0.06)", color: "#9be7ef", borderRadius: "6px", fontSize: "0.7rem", fontWeight: 700 }}>
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Hackathon Participation Section */}
+          <div style={{ ...glassStyle, padding: "28px", borderRadius: "16px" }}>
+            <h2 style={{ fontSize: "1.5rem", fontWeight: 900, color: "#00bcd4", marginBottom: "20px", marginTop: 0 }}>🏆 Hackathon Participation</h2>
+
+            {/* Upcoming Hackathons */}
+            <div style={{ marginBottom: "24px" }}>
+              <h3 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#00e676", marginBottom: "12px", marginTop: 0 }}>📅 Upcoming Events</h3>
+              <div style={{ display: "grid", gap: "12px" }}>
+                {hackathonEvents.filter(h => h.status === "Upcoming").map((event, idx) => (
+                  <div key={idx} style={{ background: "rgba(0,230,118,0.08)", padding: "14px", borderRadius: "10px", border: "1px solid rgba(0,230,118,0.2)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontWeight: 900, color: "#00e676", fontSize: "0.95rem" }}>{event.name}</div>
+                      <div style={{ color: "#9be7ef", fontSize: "0.8rem", marginTop: "4px" }}>📆 {event.date} • 🏷️ {event.category}</div>
+                      <div style={{ color: "#cdeff3", fontSize: "0.8rem", marginTop: "2px" }}>Prize: <span style={{ fontWeight: 800, color: "#ffd600" }}>{event.prize}</span></div>
+                    </div>
+                    <button style={{ padding: "8px 16px", background: event.registered ? "rgba(0,180,219,0.12)" : "linear-gradient(90deg,#00bcd4,#00e676)", color: event.registered ? "#00bcd4" : "#042024", border: event.registered ? "1px solid rgba(0,180,219,0.2)" : "none", borderRadius: "8px", fontWeight: 800, cursor: "pointer", fontSize: "0.85rem" }}>
+                      {event.registered ? "✓ Registered" : "Register"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Past Hackathons */}
+            <div>
+              <h3 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#ffd600", marginBottom: "12px", marginTop: 0 }}>🎖️ Past Events & Achievements</h3>
+              <div style={{ display: "grid", gap: "12px" }}>
+                {hackathonEvents.filter(h => h.status === "Completed").map((event, idx) => (
+                  <div key={idx} style={{ background: "rgba(255,214,0,0.08)", padding: "14px", borderRadius: "10px", border: "1px solid rgba(255,214,0,0.15)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
+                      <div>
+                        <div style={{ fontWeight: 900, color: "#ffd600", fontSize: "0.95rem" }}>{event.name}</div>
+                        <div style={{ color: "#9be7ef", fontSize: "0.8rem", marginTop: "4px" }}>📆 {event.date} • 🏷️ {event.category}</div>
+                        <div style={{ color: "#cdeff3", fontSize: "0.8rem", marginTop: "2px" }}>Prize: <span style={{ fontWeight: 800, color: "#00e676" }}>{event.prize}</span> • Placement: <span style={{ fontWeight: 800 }}>{event.placement}</span></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div style={{ ...glassStyle, padding: "24px", borderRadius: "16px", display: "flex", gap: "12px", flexWrap: "wrap" }}>
+            <button style={{ padding: "12px 20px", background: "linear-gradient(90deg,#00bcd4,#00e676)", color: "#042024", borderRadius: "8px", fontWeight: 800, cursor: "pointer", border: "none", fontSize: "0.9rem" }}>📝 Add Team Member</button>
+            <button style={{ padding: "12px 20px", background: "transparent", color: "#00bcd4", borderRadius: "8px", fontWeight: 800, cursor: "pointer", border: "1px solid rgba(0,180,219,0.3)", fontSize: "0.9rem" }}>📊 View Analytics</button>
+            <button style={{ padding: "12px 20px", background: "transparent", color: "#00e676", borderRadius: "8px", fontWeight: 800, cursor: "pointer", border: "1px solid rgba(0,230,118,0.3)", fontSize: "0.9rem" }}>🚀 Create Project</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #071427 0%, #0b2440 100%)", color: "#eaf6f8", display: "flex", fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial" }}>
@@ -306,6 +521,11 @@ export default function Dashboard() {
           >
             👤 {user?.email?.split("@")[0]}
           </button>
+          {userRole && (
+            <span style={{ marginLeft: 8, padding: "6px 10px", background: "rgba(0,180,219,0.08)", color: "#9be7ef", borderRadius: 8, fontSize: "0.8rem", fontWeight: 800, border: "1px solid rgba(0,180,219,0.08)" }}>
+              {userRole === "team-head" ? "Team Head" : "Team Member"}
+            </span>
+          )}
           <button
             onClick={async () => {
               try {
@@ -539,7 +759,7 @@ export default function Dashboard() {
                     <div style={{ display: "flex", gap: "12px" }}>
                       {joinedTeams.find((t) => t.id === team.id) ? (
                         <>
-                          <button onClick={() => setSelectedTeam(team)} style={{ flex: 1, padding: "10px", background: "linear-gradient(90deg,#00bcd4,#00e676)", color: "#042024", borderRadius: "8px", fontWeight: 800, cursor: "pointer", border: "none", fontSize: "0.9rem" }}>
+                          <button onClick={() => { setSelectedTeamForDetails(team); setShowTeamDetailsModal(true); }} style={{ flex: 1, padding: "10px", background: "linear-gradient(90deg,#00bcd4,#00e676)", color: "#042024", borderRadius: "8px", fontWeight: 800, cursor: "pointer", border: "none", fontSize: "0.9rem" }}>
                             👁️ View
                           </button>
                           <button onClick={() => handleLeaveTeam(team)} style={{ flex: 1, padding: "10px", background: "transparent", color: "#ff7a7a", borderRadius: "8px", fontWeight: 800, cursor: "pointer", border: "1px solid rgba(255,122,122,0.12)", fontSize: "0.9rem" }}>
@@ -810,7 +1030,114 @@ export default function Dashboard() {
             </div>
           </div>
         )}
+
+          {/* Team Details Modal */}
+          {showTeamDetailsModal && selectedTeamForDetails && (
+            <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 }} onClick={() => { setShowTeamDetailsModal(false); setSelectedTeamForDetails(null); }}>
+              <div style={{ ...glassStyle, width: "90%", maxWidth: "600px", maxHeight: "85vh", overflowY: "auto", padding: "32px", position: "relative", borderRadius: "16px" }} onClick={(e) => e.stopPropagation()}>
+                {/* Close Button */}
+                <button
+                  onClick={() => { setShowTeamDetailsModal(false); setSelectedTeamForDetails(null); }}
+                  style={{ position: "absolute", top: "16px", right: "16px", width: "36px", height: "36px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#00bcd4", fontSize: "1.3rem", cursor: "pointer", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  ✕
+                </button>
+
+                {/* Team Header */}
+                <div style={{ marginBottom: "28px" }}>
+                  <h2 style={{ fontSize: "1.8rem", fontWeight: 900, color: "#00bcd4", marginBottom: "8px", marginTop: 0 }}>{selectedTeamForDetails.name}</h2>
+                  <p style={{ color: "#cdeff3", fontSize: "1rem", marginBottom: "12px" }}>{selectedTeamForDetails.description}</p>
+                  <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                    <span style={{ background: selectedTeamForDetails.difficulty === "Easy" ? "rgba(0,230,118,0.12)" : selectedTeamForDetails.difficulty === "Medium" ? "rgba(255,193,7,0.10)" : "rgba(255,82,82,0.10)", color: selectedTeamForDetails.difficulty === "Easy" ? "#00e676" : selectedTeamForDetails.difficulty === "Medium" ? "#ffc107" : "#ff5252", padding: "8px 12px", borderRadius: "12px", fontSize: "0.85rem", fontWeight: 700 }}>
+                      🎯 Difficulty: {selectedTeamForDetails.difficulty}
+                    </span>
+                    <span style={{ background: "rgba(0,180,219,0.12)", color: "#9be7ef", padding: "8px 12px", borderRadius: "12px", fontSize: "0.85rem", fontWeight: 700 }}>
+                      📅 Joined: {selectedTeamForDetails.joinedDate}
+                    </span>
+                    <span style={{ background: "rgba(0,230,118,0.12)", color: "#00e676", padding: "8px 12px", borderRadius: "12px", fontSize: "0.85rem", fontWeight: 700 }}>
+                      ⚡ Progress: {selectedTeamForDetails.progress}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div style={{ marginBottom: "24px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "0.9rem" }}>
+                    <span style={{ color: "#cdeff3", fontWeight: 700 }}>Team Progress</span>
+                    <span style={{ color: "#00e676", fontWeight: 800 }}>{selectedTeamForDetails.progress}%</span>
+                  </div>
+                  <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: "14px", height: "12px", overflow: "hidden" }}>
+                    <div style={{ background: "linear-gradient(90deg, #00bcd4, #00e676)", height: "100%", width: `${selectedTeamForDetails.progress}%`, transition: "width 0.4s ease" }} />
+                  </div>
+                </div>
+
+                {/* Required Skills */}
+                <div style={{ marginBottom: "24px" }}>
+                  <h3 style={{ color: "#00bcd4", fontSize: "1.1rem", fontWeight: 800, marginBottom: "12px" }}>🛠️ Required Skills</h3>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                    {selectedTeamForDetails.skills.map((skill: string) => (
+                      <span key={skill} style={{ padding: "8px 14px", background: "rgba(0,180,219,0.12)", color: "#9be7ef", borderRadius: "12px", fontSize: "0.9rem", fontWeight: 700, border: "1px solid rgba(0,180,219,0.20)" }}>
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Team Members */}
+                <div style={{ marginBottom: "24px" }}>
+                  <h3 style={{ color: "#00bcd4", fontSize: "1.1rem", fontWeight: 800, marginBottom: "14px" }}>👥 Team Members ({selectedTeamForDetails.members.length})</h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                    {selectedTeamForDetails.members.map((member: any) => (
+                      <div key={member.name} style={{ display: "flex", alignItems: "center", gap: "12px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", padding: "14px", border: "1px solid rgba(255,255,255,0.04)" }}>
+                        <img src={member.avatar} alt={member.name} style={{ width: "44px", height: "44px", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.08)" }} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ color: "#e8fbff", fontWeight: 800, fontSize: "0.95rem" }}>{member.name}</div>
+                          <div style={{ color: "#9be7ef", fontSize: "0.85rem" }}>{member.role}</div>
+                        </div>
+                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                          {member.skills.map((skill: string) => (
+                            <span key={skill} style={{ padding: "4px 8px", background: "rgba(0,230,118,0.10)", color: "#00e676", borderRadius: "6px", fontSize: "0.75rem", fontWeight: 600 }}>
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Recent Activity */}
+                <div style={{ marginBottom: "24px" }}>
+                  <h3 style={{ color: "#00bcd4", fontSize: "1.1rem", fontWeight: 800, marginBottom: "12px" }}>📝 Recent Activity</h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {selectedTeamForDetails.recentActivity.map((activity: string, idx: number) => (
+                      <div key={idx} style={{ display: "flex", alignItems: "center", gap: "10px", color: "#cdeff3", fontSize: "0.95rem" }}>
+                        <span style={{ color: "#00e676", fontWeight: 800 }}>✓</span>
+                        <span>{activity}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{ display: "flex", gap: "12px", marginTop: "28px" }}>
+                  <button
+                    onClick={() => { openChat(selectedTeamForDetails); setShowTeamDetailsModal(false); }}
+                    style={{ flex: 1, padding: "12px", background: "linear-gradient(90deg,#00bcd4,#00e676)", color: "#042024", border: "none", borderRadius: "10px", fontWeight: 800, cursor: "pointer", fontSize: "0.95rem" }}
+                  >
+                    💬 Start Chat
+                  </button>
+                  <button
+                    onClick={() => { setShowTeamDetailsModal(false); setSelectedTeamForDetails(null); }}
+                    style={{ flex: 1, padding: "12px", background: "transparent", color: "#cdeff3", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", fontWeight: 800, cursor: "pointer", fontSize: "0.95rem" }}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }

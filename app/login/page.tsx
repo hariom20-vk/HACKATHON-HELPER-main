@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [step, setStep] = useState<"email" | "otp">("email"); // "email" or "otp"
   const [demoOtp, setDemoOtp] = useState<string>("");
   const [timer, setTimer] = useState(0);
+  const [role, setRole] = useState<"team-head" | "team-member">("team-member");
 
   useEffect(() => {
     setMounted(true);
@@ -106,6 +107,13 @@ export default function LoginPage() {
       // OTP verified successfully
       console.log("✅ OTP verified successfully");
 
+      // persist selected role for dashboard perspective
+      try {
+        if (typeof window !== "undefined") localStorage.setItem("hh_user_role", role);
+      } catch (e) {
+        console.warn("Could not persist role", e);
+      }
+
       // Redirect to dashboard after short delay
       setTimeout(() => {
         router.push("/dashboard");
@@ -162,6 +170,11 @@ export default function LoginPage() {
   const handleDemoLogin = async () => {
     setBusy(true);
     // Demo mode - just redirect to dashboard
+    try {
+      if (typeof window !== "undefined") localStorage.setItem("hh_user_role", role);
+    } catch (e) {
+      console.warn("Could not persist role", e);
+    }
     setTimeout(() => {
       router.push("/dashboard");
     }, 500);
@@ -276,6 +289,23 @@ export default function LoginPage() {
 
           {step === "email" ? (
             <form onSubmit={handleSendOtp} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {/* Role selection: Team Head / Team Member */}
+              <div style={{ display: "flex", gap: "8px", marginBottom: 4 }}>
+                <button
+                  type="button"
+                  onClick={() => setRole("team-head")}
+                  style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: role === "team-head" ? "2px solid #00bcd4" : "1px solid rgba(255,255,255,0.06)", background: role === "team-head" ? "linear-gradient(90deg,#00bcd4,#00e676)" : "transparent", color: role === "team-head" ? "#042024" : "#cdeff3", fontWeight: 800, cursor: "pointer" }}
+                >
+                  👑 Team Head
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole("team-member")}
+                  style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: role === "team-member" ? "2px solid #00bcd4" : "1px solid rgba(255,255,255,0.06)", background: role === "team-member" ? "linear-gradient(90deg,#00bcd4,#00e676)" : "transparent", color: role === "team-member" ? "#042024" : "#cdeff3", fontWeight: 800, cursor: "pointer" }}
+                >
+                  👥 Team Member
+                </button>
+              </div>
               <div>
                 <label style={{ display: "block", fontSize: "14px", color: "#d1d5db", marginBottom: "8px" }}>
                   Email Address
@@ -344,6 +374,23 @@ export default function LoginPage() {
             </form>
           ) : (
             <form onSubmit={handleVerifyOtp} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {/* Show / change role while verifying OTP */}
+              <div style={{ display: "flex", gap: "8px", marginBottom: 4 }}>
+                <button
+                  type="button"
+                  onClick={() => setRole("team-head")}
+                  style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: role === "team-head" ? "2px solid #00bcd4" : "1px solid rgba(255,255,255,0.06)", background: role === "team-head" ? "linear-gradient(90deg,#00bcd4,#00e676)" : "transparent", color: role === "team-head" ? "#042024" : "#cdeff3", fontWeight: 800, cursor: "pointer" }}
+                >
+                  👑 Team Head
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole("team-member")}
+                  style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: role === "team-member" ? "2px solid #00bcd4" : "1px solid rgba(255,255,255,0.06)", background: role === "team-member" ? "linear-gradient(90deg,#00bcd4,#00e676)" : "transparent", color: role === "team-member" ? "#042024" : "#cdeff3", fontWeight: 800, cursor: "pointer" }}
+                >
+                  👥 Team Member
+                </button>
+              </div>
               <div>
                 <label style={{ display: "block", fontSize: "14px", color: "#d1d5db", marginBottom: "8px" }}>
                   OTP Code
